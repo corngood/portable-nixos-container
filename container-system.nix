@@ -36,13 +36,13 @@ let
     inherit configuration;
     system = pkgs.system;
   };
-  system = nixos.config.system.build.toplevel;
+  system = nixos.config.environment.etc."systemd/system".source;
 
   install-nixos-container = pkgs.writeShellScript "" ''
     set -euo pipefail
-    ln -is ${system}/etc/systemd/system/{nat,container@}.service /etc/systemd/system
+    ln -is ${system}/{nat,container@}.service /etc/systemd/system
     mkdir -p /etc/systemd/system/network.target.wants
-    ln -is ${system}/etc/systemd/system/nat.service /etc/systemd/system/network.target.wants
+    ln -is ${system}/nat.service /etc/systemd/system/network.target.wants
     systemctl daemon-reload
   '';
 in
@@ -53,7 +53,7 @@ in
     installPhase = ''
       mkdir -p $out/bin $out/etc/systemd/system
       ln -s ${nixos-container}/bin/nixos-container $out/bin/nixos-container
-      ln -s ${system}/etc/systemd/system/{nat,container@}.service $out/etc/systemd/system/
+      ln -s ${system}/{nat,container@}.service $out/etc/systemd/system/
       ln -s ${install-nixos-container} $out/bin/install-nixos-container
     '';
   }
