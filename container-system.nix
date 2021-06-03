@@ -38,6 +38,13 @@ let
   };
   system = nixos.config.system.build.toplevel;
 
+  install-nixos-container = pkgs.writeShellScript "" ''
+    set -euo pipefail
+    ln -is ${system}/etc/systemd/system/{nat,container@}.service /etc/systemd/system
+    mkdir -p /etc/systemd/system/network.target.wants
+    ln -is ${system}/etc/systemd/system/nat.service /etc/systemd/system/network.target.wants
+    systemctl daemon-reload
+  '';
 in
   with pkgs;
   stdenv.mkDerivation {
@@ -47,5 +54,6 @@ in
       mkdir -p $out/bin $out/etc/systemd/system
       ln -s ${nixos-container}/bin/nixos-container $out/bin/nixos-container
       ln -s ${system}/etc/systemd/system/{nat,container@}.service $out/etc/systemd/system/
+      ln -s ${install-nixos-container} $out/bin/install-nixos-container
     '';
   }
