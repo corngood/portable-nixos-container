@@ -17,6 +17,7 @@
           localSystem.system = system;
         }).nixos-container;
       };
+      defaultPackage = self.packages.${system}.container-system;
     });
 
 }
