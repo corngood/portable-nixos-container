@@ -1,7 +1,13 @@
+{
+  pkgs ? import <nixpkgs> {},
+  lib ? pkgs.lib,
+  # older version of nixos-container is required for compatibility with older systemd
+  nixos-container ? (import (builtins.fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/nixos-19.09.tar.gz) {}).nixos-container
+}:
 let
-  configuration = { config, pkgs, ... }: {
+  configuration = { config, pkgs, modulesPath, ... }: {
     imports = [
-      <nixpkgs/nixos/modules/virtualisation/docker-image.nix>
+      "${modulesPath}/virtualisation/docker-image.nix"
     ];
     time.timeZone = "America/Halifax";
     system.stateVersion = "19.09";
@@ -21,17 +27,19 @@ let
       externalInterface = "eth0";
     };
   };
-  nixos = import <nixpkgs/nixos> {
+  nixos = if lib ? nixosSystem
+  then lib.nixosSystem {
+    modules = [ configuration ];
+    system = pkgs.system;
+  }
+  else import "${pkgs.path}/nixos" {
     inherit configuration;
-    system = builtins.currentSystem;
+    system = pkgs.system;
   };
   system = nixos.config.system.build.toplevel;
-  # older version of nixos-container is required for compatibility with older systemd
-  nixos-container =
-    (import (builtins.fetchTarball https://github.com/NixOS/nixpkgs-channels/archive/nixos-19.09.tar.gz) {})
-    .nixos-container;
+
 in
-  { pkgs ? import <nixpkgs> {} }: with pkgs;
+  with pkgs;
   stdenv.mkDerivation {
     name = "container-system";
     unpackPhase = ":";
